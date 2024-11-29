@@ -14,7 +14,53 @@ datasource db {
 }
 
 model Usuario {
-  id     Int      @id @default(autoincrement())
-  nombre String
-  email  String   @unique
+  id          Int       @id @default(autoincrement())
+  nombre      String
+  email       String    @unique
+  password    String
+  rol         String    @default("usuario") // "admin" o "usuario"
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  perfil      Perfil?
+  posts       Post[]
+  comentarios Comentario[]
+}
+
+model Perfil {
+  id          Int      @id @default(autoincrement())
+  biografia   String?
+  avatar      String?
+  telefono    String?
+  usuario     Usuario  @relation(fields: [usuarioId], references: [id])
+  usuarioId   Int      @unique
+}
+
+model Post {
+  id          Int         @id @default(autoincrement())
+  titulo      String
+  contenido   String      @db.Text
+  publicado   Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  autor       Usuario     @relation(fields: [autorId], references: [id])
+  autorId     Int
+  categorias  Categoria[]
+  comentarios Comentario[]
+}
+
+model Comentario {
+  id        Int      @id @default(autoincrement())
+  contenido String
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id])
+  postId    Int
+  autor     Usuario  @relation(fields: [autorId], references: [id])
+  autorId   Int
+}
+
+model Categoria {
+  id          Int      @id @default(autoincrement())
+  nombre      String   @unique
+  descripcion String?
+  posts       Post[]
 }
