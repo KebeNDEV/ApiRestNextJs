@@ -19,6 +19,8 @@ model Usuario {
   email       String    @unique
   password    String
   rol         String    @default("usuario") // "admin" o "usuario"
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   perfil      Perfil?

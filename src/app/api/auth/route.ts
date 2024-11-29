@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/utils/prisma'
 import { hashPassword } from '@/lib/auth'
 import { Prisma } from '@prisma/client'
+import { validatePassword } from '@/lib/validations'
 
 interface CreateUsuarioInput {
     nombre: string
@@ -18,6 +19,17 @@ export async function POST(request: Request) {
     if (!body.nombre || !body.email || !body.password) {
       return NextResponse.json(
         { error: 'Nombre, email y password son requeridos' },
+        { status: 400 }
+      )
+    }
+
+    const passwordErrors = validatePassword(body.password)
+    if (passwordErrors.length > 0) {
+      return NextResponse.json(
+        { 
+          error: 'La contraseña no cumple con los requisitos',
+          details: passwordErrors
+        },
         { status: 400 }
       )
     }

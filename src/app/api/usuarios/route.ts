@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/utils/prisma';
 import { hashPassword } from '@/lib/auth';
 import { Prisma, type Usuario } from '@prisma/client';
+import { validatePassword } from '@/lib/validations';
 
 // GET - Obtener todos los usuarios
 export async function GET() {
@@ -83,6 +84,16 @@ export async function PUT(request: Request) {
             updateData.email = body.email
         }
         if (body.password) {
+            const passwordErrors = validatePassword(body.password)
+            if (passwordErrors.length > 0) {
+                return NextResponse.json(
+                    { 
+                        error: 'La contraseña no cumple con los requisitos',
+                        details: passwordErrors
+                    },
+                    { status: 400 }
+                )
+            }
             updateData.password = await hashPassword(body.password)
         }
 
