@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/utils/prisma'
 import bcrypt from 'bcrypt'
 import { generateToken } from '@/lib/auth'
+import { Prisma } from '@prisma/client'
 
 interface UsuarioWithPassword {
     id: number
@@ -22,19 +23,21 @@ export async function POST(request: Request) {
       )
     }
 
-    const usuario = await prisma.usuario.findUnique({
-      where: { email: body.email },
-      select: { id: true, nombre: true, email: true, password: true, rol: true }
-    }) as UsuarioWithPassword | null
+    const usuario = await prisma.$queryRaw<UsuarioWithPassword[]>`
+      SELECT id, nombre, email, password, rol 
+      FROM Usuario 
+      WHERE email = ${body.email} 
+      LIMIT 1
+    `
 
-    if (!usuario) {
+    if (!usuario || usuario.length === 0) {
       return NextResponse.json(
         { error: 'Credenciales inválidas' },
         { status: 401 }
       )
     }
 
-    const passwordValido = await bcrypt.compare(body.password, usuario.password)
+    const passwordValido = await bcrypt.compare(body.password, usuario[0].password)
     if (!passwordValido) {
       return NextResponse.json(
         { error: 'Credenciales inválidas' },
@@ -42,15 +45,15 @@ export async function POST(request: Request) {
       )
     }
 
-    const token = generateToken(usuario.id)
+    const token = generateToken(usuario[0].id)
 
     return NextResponse.json({
       message: 'Login exitoso',
       usuario: {
-        id: usuario.id,
-        nombre: usuario.nombre,
-        email: usuario.email,
-        rol: usuario.rol
+        id: usuario[0].id,
+        nombre: usuario[0].nombre,
+        email: usuario[0].email,
+        rol: usuario[0].rol
       },
       token
     })
