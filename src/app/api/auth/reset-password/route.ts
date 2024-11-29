@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/utils/prisma'
 import { hashPassword } from '@/lib/auth'
 import { validatePassword } from '@/lib/validations'
+import { Prisma } from '@prisma/client'
 
 export async function POST(request: Request) {
   try {
@@ -26,9 +27,11 @@ export async function POST(request: Request) {
       )
     }
 
-    // Buscar usuario con token válido
+    // Buscar usuario con token válido usando Prisma Client
+    
     const usuario = await prisma.usuario.findFirst({
       where: {
+        // @ts-ignore
         resetPasswordToken: body.token,
         resetPasswordExpires: {
           gt: new Date()
@@ -43,16 +46,18 @@ export async function POST(request: Request) {
       )
     }
 
-    // Actualizar contraseña
+    // Actualizar contraseña usando Prisma Client
     const hashedPassword = await hashPassword(body.password)
     
     await prisma.usuario.update({
-      where: { id: usuario.id },
+      where: { 
+        id: usuario.id 
+      },
       data: {
         password: hashedPassword,
         resetPasswordToken: null,
         resetPasswordExpires: null
-      }
+      } as any
     })
 
     return NextResponse.json({

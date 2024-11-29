@@ -14,6 +14,11 @@ const transporter = nodemailer.createTransport({
   },
 })
 
+interface ResetPasswordData {
+  resetPasswordToken: string | null
+  resetPasswordExpires: Date | null
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
@@ -42,13 +47,12 @@ export async function POST(request: Request) {
     const resetTokenExpiry = new Date(Date.now() + 3600000) // 1 hora
 
     // Guardar token en la base de datos
-    await prisma.usuario.update({
-      where: { email: body.email },
-      data: {
-        resetPasswordToken: resetToken,
-        resetPasswordExpires: resetTokenExpiry
-      }
-    })
+    await prisma.$executeRaw`
+      UPDATE Usuario 
+      SET resetPasswordToken = ${resetToken},
+          resetPasswordExpires = ${resetTokenExpiry}
+      WHERE email = ${body.email}
+    `
 
     // Enviar email
     const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${resetToken}`
