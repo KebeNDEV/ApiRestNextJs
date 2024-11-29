@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     }
 
     const usuario = await prisma.$queryRaw<UsuarioWithPassword[]>`
-      SELECT id, nombre, email, password, rol 
+      SELECT id, nombre, email, password, rol
       FROM Usuario 
       WHERE email = ${body.email} 
       LIMIT 1

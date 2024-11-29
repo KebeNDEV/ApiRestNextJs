@@ -4,14 +4,6 @@ import { hashPassword } from '@/lib/auth'
 import { Prisma } from '@prisma/client'
 import { validatePassword } from '@/lib/validations'
 
-interface CreateUsuarioInput {
-    nombre: string
-    email: string
-    password: string
-    rol?: string
-    updatedAt?: Date
-}
-
 export async function POST(request: Request) {
   try {
     const body = await request.json()
@@ -36,7 +28,7 @@ export async function POST(request: Request) {
 
     const hashedPassword = await hashPassword(body.password)
 
-    const createData: CreateUsuarioInput = {
+    const createData = {
       nombre: body.nombre,
       email: body.email,
       password: hashedPassword,

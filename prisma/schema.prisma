@@ -14,18 +14,18 @@ datasource db {
 }
 
 model Usuario {
-  id          Int       @id @default(autoincrement())
-  nombre      String
-  email       String    @unique
-  password    String
-  rol         String    @default("usuario") // "admin" o "usuario"
+  id                    Int       @id @default(autoincrement())
+  nombre               String
+  email                String    @unique
+  password             String
+  rol                  String    @default("usuario")
   resetPasswordToken   String?
   resetPasswordExpires DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  perfil      Perfil?
-  posts       Post[]
-  comentarios Comentario[]
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  perfil               Perfil?
+  posts                Post[]
+  comentarios          Comentario[]
 }
 
 model Perfil {
