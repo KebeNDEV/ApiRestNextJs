@@ -1,15 +1,23 @@
 import { NextResponse } from 'next/server';
-import type { Usuario } from '@/app/types/usuario';
+import { PrismaClient } from '@prisma/client';
 
-// Simulamos una base de datos con un array
-let usuarios: Usuario[] = [
-    { id: 1, nombre: "Juan", email: "juan@ejemplo.com" },
-    { id: 2, nombre: "María", email: "maria@ejemplo.com" }
-];
+const globalForPrisma = global as unknown as { prisma: PrismaClient }
+
+export const prisma = globalForPrisma.prisma || new PrismaClient()
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 
 // GET - Obtener todos los usuarios
 export async function GET() {
-    return NextResponse.json(usuarios);
+    try {
+        const usuarios = await prisma.usuario.findMany();
+        return NextResponse.json(usuarios);
+    } catch (error) {
+        return NextResponse.json(
+            { error: "Error al obtener usuarios" },
+            { status: 500 }
+        );
+    }
 }
 
 // POST - Crear un nuevo usuario
@@ -25,79 +33,61 @@ export async function POST(request: Request) {
             );
         }
 
-        // Crear nuevo usuario
-        const nuevoUsuario: Usuario = {
-            id: usuarios.length + 1,
-            nombre: body.nombre,
-            email: body.email
-        };
+        const usuario = await prisma.usuario.create({
+            data: {
+                nombre: body.nombre,
+                email: body.email
+            }
+        });
 
-        usuarios.push(nuevoUsuario);
-        return NextResponse.json(nuevoUsuario, { status: 201 });
-
+        return NextResponse.json(usuario, { status: 201 });
     } catch (error) {
         return NextResponse.json(
-            { error: "Error al procesar la solicitud" },
-            { status: 400 }
+            { error: "Error al crear el usuario" },
+            { status: 500 }
         );
     }
 }
 
+// PUT - Actualizar usuario
 export async function PUT(request: Request) {
-  try {
-    const body = await request.json();
-    
-    // Encontrar el usuario
-    const index = usuarios.findIndex(u => u.id === body.id);
-    
-    if (index === -1) {
-      return NextResponse.json(
-        { error: 'Usuario no encontrado' },
-        { status: 404 }
-      );
+    try {
+        const body = await request.json();
+        
+        const usuario = await prisma.usuario.update({
+            where: { id: body.id },
+            data: {
+                nombre: body.nombre,
+                email: body.email
+            }
+        });
+
+        return NextResponse.json(usuario);
+    } catch (error) {
+        return NextResponse.json(
+            { error: "Error al actualizar el usuario" },
+            { status: 500 }
+        );
     }
-
-    // Actualizar usuario
-    usuarios[index] = {
-      ...usuarios[index],
-      nombre: body.nombre,
-      email: body.email
-    };
-
-    return NextResponse.json(usuarios[index]);
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Error al actualizar el usuario' },
-      { status: 500 }
-    );
-  }
 }
 
+// DELETE - Eliminar usuario
 export async function DELETE(request: Request) {
-  try {
-    const body = await request.json();
-    
-    // Encontrar el usuario
-    const index = usuarios.findIndex(u => u.id === body.id);
-    
-    if (index === -1) {
-      return NextResponse.json(
-        { error: 'Usuario no encontrado' },
-        { status: 404 }
-      );
+    try {
+        const body = await request.json();
+        
+        await prisma.usuario.delete({
+            where: { id: body.id }
+        });
+
+        return NextResponse.json(
+            { message: "Usuario eliminado correctamente" },
+            { status: 200 }
+        );
+    } catch (error) {
+        return NextResponse.json(
+            { error: "Error al eliminar el usuario" },
+            { status: 500 }
+        );
     }
-
-    // Eliminar usuario
-    usuarios = usuarios.filter(u => u.id !== body.id);
-
-    return NextResponse.json(
-      { message: 'Usuario eliminado correctamente' },
-      { status: 200 }
-    );
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Error al eliminar el usuario' },
-      { status: 500 }
-    );
-  }
 }
